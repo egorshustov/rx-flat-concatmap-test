@@ -26,12 +26,12 @@ class MainActivity : AppCompatActivity() {
 
         val disposable = getPostsObservable()
             .subscribeOn(Schedulers.io())
-            .flatMap {
+            .concatMap {
                 getCommentsObservable(it)
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                updatePost(it)
+                postsAdapter.updatePost(it)
             }
 
         compositeDisposable.add(disposable)
@@ -52,20 +52,6 @@ class MainActivity : AppCompatActivity() {
                 Observable.fromIterable(it)
                     .subscribeOn(Schedulers.io())
             }
-    }
-
-    private fun updatePost(post: Post) {
-        val disposable = Observable.fromIterable(postsAdapter.getPosts())
-            .filter {
-                it.id == post.id
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                Log.d(TAG, "onNext: updating post: " + post.id + ", thread: " + Thread.currentThread().name)
-                postsAdapter.updatePost(it)
-            }
-
-        compositeDisposable.add(disposable)
     }
 
     private fun getCommentsObservable(post: Post): Observable<Post> {
